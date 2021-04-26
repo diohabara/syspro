@@ -1,0 +1,46 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/time.h>
+
+#define BUFSIZE 4096
+#define COPYSIZE 256
+
+double getETime() {
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  return tv.tv_sec + (double)tv.tv_usec * 1e-6;
+}
+
+int main(int argc, char *argv[]) {
+  FILE *fpin, *fpout;
+  double st, en;
+  char buf[COPYSIZE];
+
+  if (argc != 3) {
+    fprintf(stderr, "Usage: copy3_highio <original copy> <copy>\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if ((fpin = fopen(argv[1], "rb")) == NULL) {
+    perror(argv[1]);
+    exit(EXIT_FAILURE);
+  }
+
+  if ((fpout = fopen(argv[2], "wb")) == NULL) {
+    perror(argv[2]);
+    exit(EXIT_FAILURE);
+  }
+
+  setvbuf(fpin, buf, _IONBF, BUFSIZE);
+
+  st = getETime();
+  while (fread(buf, 1, COPYSIZE, fpin) == 1) {
+    fwrite(buf, 1, COPYSIZE, fpout);
+  }
+  en = getETime();
+
+  fclose(fpin);
+  fclose(fpout);
+
+  printf("Elapsed Time: %.6f\n", en - st);
+}
